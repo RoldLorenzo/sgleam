@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt::Write};
 
+use camino::Utf8PathBuf;
+use ecow::EcoString;
 use gleam_core::{ast::{Definition, Pattern, Statement, TargetedDefinition, UntypedStatement}, build::Module, io::FileSystemWriter, Error};
 use indoc::formatdoc;
 use rquickjs::{Array, Context};
@@ -97,9 +99,11 @@ impl Repl {
 
             let parsed = parser::parse_repl(&code);
 
-            if let Err(_err) = parsed {
-                // FIXME: Create error correctly
-                println!("parser error");
+            if let Err(error) = parsed {
+                let start = error.location.start as usize;
+                let end = error.location.end as usize;
+                let src: EcoString = code[start..end].into();
+                show_error(&SgleamError::Gleam(Error::Parse { path: Utf8PathBuf::from("repl"), src, error }));
                 continue;
             }
 
