@@ -100,6 +100,18 @@ impl Repl {
             let parsed = parser::parse_repl(&code);
 
             if let Err(error) = parsed {
+                /*
+                FIXME: this error will still show incorrect line/column
+                Example:
+
+                fn hi() {
+
+                } fn () {}
+
+                error: Syntax error
+                repl:1:2
+                ...
+                */
                 let start = error.location.start as usize;
                 let end = error.location.end as usize;
                 let src: EcoString = code[start..end].into();
