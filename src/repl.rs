@@ -38,7 +38,7 @@ pub struct Repl {
     imports: Vec<String>,
     consts: Vec<String>,
     types: Vec<String>,
-    fns: Vec<(String, Option<String>)>,
+    fns: Vec<(String, String)>,
     vars: HashMap<String, (usize, String)>,
     project: Project,
     context: Context,
@@ -317,15 +317,20 @@ impl Repl {
     }
 
     fn run_fn(&mut self, code: String, name: Option<String>) -> Result<(), Error> {
-        for (i, (_, other_name)) in self.fns.iter().enumerate() {
-            if !other_name.is_none() && *other_name == name {
-                let _ = self.fns.remove(i);
-                break;
+        if let Some(name) = name {
+            for (i, (_, other_name)) in self.fns.iter().enumerate() {
+                if *other_name == name {
+                    let _ = self.fns.remove(i);
+                    break;
+                }
             }
+
+            self.fns.push((code, name));
+            return self.run_code(EntryKind::Other);
         }
         
-        self.fns.push((code, name));
-        self.run_code(EntryKind::Other)
+        // function is anonymous
+        self.run_code(EntryKind::Expr(code))
     }
 
     fn run_let(&mut self, name: String, code: String) -> Result<(), Error> {
